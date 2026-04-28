@@ -1,0 +1,48 @@
+name: Terraform DigitalOcean
+
+on:
+  push:
+    branches: [main]
+    paths: ["terraform/**"]
+  pull_request:
+    branches: [main]
+    paths: ["terraform/**"]
+  workflow_dispatch:
+
+jobs:
+  terraform:
+    name: Terraform
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+
+    env:
+      TF_VAR_do_token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+      TF_VAR_ssh_public_key: ${{ secrets.DROPLET_SSH_PUBLIC_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.9"
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Format Check
+        run: terraform fmt -check
+        continue-on-error: true
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -input=false -out=tfplan
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve -input=false tfplan

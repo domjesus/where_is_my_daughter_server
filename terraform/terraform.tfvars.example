@@ -1,0 +1,6 @@
+# Copy this file to terraform.tfvars and fill in your values.
+# NEVER commit terraform.tfvars — it contains secrets.
+
+do_token       = "your-digitalocean-api-token-here"
+region         = "nyc3"
+ssh_public_key = "ssh-rsa AAAA... your-public-key-content-here"

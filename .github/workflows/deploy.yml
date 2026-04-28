@@ -1,0 +1,40 @@
+name: Deploy to WhereIsMyDaughter
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "terraform/**"
+      - ".github/workflows/terraform.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: root
+          key: ${{ secrets.DROPLET_SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /var/www/app
+
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo ${{ secrets.APP_ENV_PRODUCTION_B64 }} | base64 -d > .env
+
+            # Build frontend assets on the host so the volume mount has them
+            docker run --rm -v $(pwd):/app -w /app node:20-alpine sh -c 'npm ci --legacy-peer-deps && npm run build'
+
+            docker compose -f compose.production.yaml up -d --build
+
+            docker compose -f compose.production.yaml exec -T app php artisan migrate --force
+            docker compose -f compose.production.yaml exec -T app php artisan config:cache
+            docker compose -f compose.production.yaml exec -T app php artisan route:cache
+            docker compose -f compose.production.yaml exec -T app php artisan view:cache
