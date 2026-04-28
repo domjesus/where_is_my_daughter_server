@@ -1,7 +1,3 @@
-# where_is_my_daughter_server
-
-This is a Internet of Things project at University of North Florida - Master's program developing an android app with BLE, wifi and GPS features
-
 # Where's My Daughter — IoT Live Tracking System
 
 This project is developed under the class Internet Of Things at University of North Florida, at Master's program, under supervision of Dr. Zormita Prodanoff.
